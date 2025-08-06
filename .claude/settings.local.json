@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir)",
+      "Bash(timeout:*)",
+      "Bash(\"C:\\Program Files\\Unity\\Hub\\Editor\\2023.3.34f1\\Editor\\Unity.exe\" -batchmode -quit -projectPath . -logFile compilation_test.log)",
+      "Bash(where unity)",
+      "Bash(find:*)",
+      "Bash(powershell:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(for file in *.cs)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(done)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,21 @@
+{
+    "name": "XRBubbleLibrary.Physics",
+    "rootNamespace": "XRBubbleLibrary",
+    "references": [
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Mathematics",
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Jobs"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

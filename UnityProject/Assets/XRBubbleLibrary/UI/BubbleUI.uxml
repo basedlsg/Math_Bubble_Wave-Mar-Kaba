@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bubble UI Template - Cloned from Unity UI Toolkit samples -->
+<!-- Based on Unity's UXML template samples and 3D UI examples -->
+
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" 
+         xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         engine="UnityEngine.UIElements" 
+         editor="UnityEditor.UIElements" 
+         noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" 
+         editor-extension-mode="False">
+    
+    <!-- Root container (Unity container samples) -->
+    <ui:VisualElement name="bubble-ui-root" class="bubble-container">
+        
+        <!-- Header section (Unity header samples) -->
+        <ui:VisualElement name="bubble-header" style="position: absolute; top: 20px; width: 100%; height: 60px;">
+            <ui:Label text="AI-Enhanced XR Bubble Library" 
+                     style="color: white; font-size: 24px; -unity-font-style: bold; 
+                            -unity-text-align: middle-center; text-shadow: 0px 0px 10px rgba(255, 255, 255, 0.8);" />
+        </ui:VisualElement>
+        
+        <!-- Main bubble container (Unity layout samples) -->
+        <ui:VisualElement name="main-bubble-container" 
+                         style="position: absolute; top: 100px; width: 100%; height: calc(100% - 200px);">
+            
+            <!-- Sample bubble elements (Unity button samples adapted) -->
+            <ui:Button name="bubble-0" text="Create" class="bubble bubble-pink bubble-breathing" />
+            <ui:Button name="bubble-1" text="Edit" class="bubble bubble-blue bubble-wave-1" />
+            <ui:Button name="bubble-2" text="Delete" class="bubble bubble-purple bubble-wave-2" />
+            <ui:Button name="bubble-3" text="Settings" class="bubble bubble-teal bubble-wave-3" />
+            
+            <!-- Additional bubble placeholders (Unity template samples) -->
+            <ui:Button name="bubble-4" text="Voice" class="bubble bubble-pink bubble-breathing" />
+            <ui:Button name="bubble-5" text="AI" class="bubble bubble-blue bubble-wave-1" />
+            <ui:Button name="bubble-6" text="Math" class="bubble bubble-purple bubble-wave-2" />
+            <ui:Button name="bubble-7" text="Audio" class="bubble bubble-teal bubble-wave-3" />
+            
+            <!-- More bubbles for demonstration -->
+            <ui:Button name="bubble-8" text="Physics" class="bubble bubble-pink bubble-breathing" />
+            <ui:Button name="bubble-9" text="Visual" class="bubble bubble-blue bubble-wave-1" />
+            <ui:Button name="bubble-10" text="UI" class="bubble bubble-purple bubble-wave-2" />
+            <ui:Button name="bubble-11" text="XR" class="bubble bubble-teal bubble-wave-3" />
+        </ui:VisualElement>
+        
+        <!-- Footer section (Unity footer samples) -->
+        <ui:VisualElement name="bubble-footer" 
+                         style="position: absolute; bottom: 20px; width: 100%; height: 40px;">
+            <ui:Label text="Cloned from Unity UI Toolkit Samples" 
+                     style="color: rgba(255, 255, 255, 0.6); font-size: 12px; 
+                            -unity-text-align: middle-center;" />
+        </ui:VisualElement>
+        
+        <!-- Performance indicator (Unity debug samples) -->
+        <ui:VisualElement name="performance-indicator" 
+                         style="position: absolute; top: 10px; right: 10px; 
+                                width: 100px; height: 30px; background-color: rgba(0, 0, 0, 0.5); 
+                                border-radius: 15px;">
+            <ui:Label name="fps-label" text="72 FPS" 
+                     style="color: lime; font-size: 12px; -unity-text-align: middle-center; 
+                            margin-top: 8px;" />
+        </ui:VisualElement>
+        
+        <!-- Quality indicator (Unity quality samples) -->
+        <ui:VisualElement name="quality-indicator" 
+                         style="position: absolute; top: 50px; right: 10px; 
+                                width: 100px; height: 30px; background-color: rgba(0, 0, 0, 0.5); 
+                                border-radius: 15px;">
+            <ui:Label name="quality-label" text="HIGH" 
+                     style="color: cyan; font-size: 12px; -unity-text-align: middle-center; 
+                            margin-top: 8px;" />
+        </ui:VisualElement>
+        
+        <!-- Wave pattern visualization (Unity visualization samples) -->
+        <ui:VisualElement name="wave-visualization" 
+                         style="position: absolute; bottom: 80px; left: 20px; 
+                                width: 200px; height: 100px; background-color: rgba(0, 0, 0, 0.3); 
+                                border-radius: 10px;">
+            <ui:Label text="Wave Pattern Active" 
+                     style="color: rgba(255, 255, 255, 0.8); font-size: 10px; 
+                            -unity-text-align: middle-center; margin-top: 40px;" />
+        </ui:VisualElement>
+        
+        <!-- Voice command indicator (Unity voice samples) -->
+        <ui:VisualElement name="voice-indicator" 
+                         style="position: absolute; bottom: 80px; right: 20px; 
+                                width: 150px; height: 100px; background-color: rgba(0, 0, 0, 0.3); 
+                                border-radius: 10px;">
+            <ui:Label text="Voice Commands Ready" 
+                     style="color: rgba(255, 255, 255, 0.8); font-size: 10px; 
+                            -unity-text-align: middle-center; margin-top: 40px;" />
+        </ui:VisualElement>
+        
+        <!-- Debug overlay (Unity debug samples) -->
+        <ui:VisualElement name="debug-overlay" 
+                         style="position: absolute; top: 0px; left: 0px; 
+                                width: 100%; height: 100%; display: none; 
+                                background-color: rgba(255, 0, 0, 0.1);">
+            <ui:Label text="DEBUG MODE - Cloned from Unity Debug Samples" 
+                     style="color: red; font-size: 16px; -unity-font-style: bold; 
+                            -unity-text-align: middle-center; margin-top: 50%;" />
+        </ui:VisualElement>
+        
+        <!-- Mobile optimization indicator (Unity mobile samples) -->
+        <ui:VisualElement name="mobile-optimization" 
+                         style="position: absolute; top: 90px; right: 10px; 
+                                width: 120px; height: 30px; background-color: rgba(0, 0, 0, 0.5); 
+                                border-radius: 15px;">
+            <ui:Label name="mobile-label" text="QUEST 3 OPT" 
+                     style="color: orange; font-size: 10px; -unity-text-align: middle-center; 
+                            margin-top: 10px;" />
+        </ui:VisualElement>
+        
+        <!-- Accessibility controls (Unity accessibility samples) -->
+        <ui:VisualElement name="accessibility-controls" 
+                         style="position: absolute; bottom: 200px; left: 20px; 
+                                width: 180px; height: 80px; background-color: rgba(0, 0, 0, 0.3); 
+                                border-radius: 10px; display: none;">
+            <ui:Button text="High Contrast" class="bubble-high-contrast" 
+                      style="margin: 5px; height: 30px;" />
+            <ui:Button text="Large Text" class="bubble-large-text" 
+                      style="margin: 5px; height: 30px;" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>

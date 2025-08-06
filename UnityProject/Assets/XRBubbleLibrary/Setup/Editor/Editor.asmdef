@@ -1,0 +1,23 @@
+{
+    "name": "XRBubbleLibrary.Setup.Editor",
+    "rootNamespace": "XRBubbleLibrary",
+    "references": [
+        "Unity.Mathematics",
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.Management",
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Interactions"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

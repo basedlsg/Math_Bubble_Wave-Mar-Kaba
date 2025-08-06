@@ -1,0 +1,244 @@
+/* Bubble UI Styles - Cloned from Unity UI Toolkit samples */
+/* Based on Unity's UI Toolkit styling samples and 3D UI examples */
+
+/* Root container styling (Unity container samples) */
+.bubble-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Individual bubble styling (Unity button samples adapted) */
+.bubble {
+    width: 100px;
+    height: 100px;
+    border-radius: 50px; /* Make circular */
+    margin: 10px;
+    
+    /* Neon-pastel base styling (Unity color samples) */
+    background-color: rgba(255, 102, 204, 0.8); /* Neon pink default */
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+    
+    /* Glass effect styling (Unity transparency samples) */
+    opacity: 0.9;
+    
+    /* Text styling (Unity text samples) */
+    color: white;
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    
+    /* Glow effect (Unity shadow samples) */
+    text-shadow: 0px 0px 10px rgba(255, 102, 204, 0.8);
+    
+    /* Transition effects (Unity transition samples) */
+    transition-property: scale, background-color, text-shadow;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+}
+
+/* Bubble hover state (Unity hover samples) */
+.bubble:hover {
+    scale: 1.1;
+    background-color: rgba(255, 102, 204, 1.0);
+    text-shadow: 0px 0px 15px rgba(255, 102, 204, 1.0);
+}
+
+/* Bubble active/pressed state (Unity active samples) */
+.bubble:active {
+    scale: 0.95;
+    background-color: rgba(255, 102, 204, 0.6);
+}
+
+/* Neon color variations (Unity color class samples) */
+.bubble-pink {
+    background-color: rgba(255, 102, 204, 0.8); /* Neon pink */
+    text-shadow: 0px 0px 10px rgba(255, 102, 204, 0.8);
+    border-color: rgba(255, 102, 204, 0.3);
+}
+
+.bubble-blue {
+    background-color: rgba(102, 204, 255, 0.8); /* Neon blue */
+    text-shadow: 0px 0px 10px rgba(102, 204, 255, 0.8);
+    border-color: rgba(102, 204, 255, 0.3);
+}
+
+.bubble-purple {
+    background-color: rgba(204, 102, 255, 0.8); /* Neon purple */
+    text-shadow: 0px 0px 10px rgba(204, 102, 255, 0.8);
+    border-color: rgba(204, 102, 255, 0.3);
+}
+
+.bubble-teal {
+    background-color: rgba(102, 255, 204, 0.8); /* Neon teal */
+    text-shadow: 0px 0px 10px rgba(102, 255, 204, 0.8);
+    border-color: rgba(102, 255, 204, 0.3);
+}
+
+/* Bubble wrapper for positioning (Unity positioning samples) */
+.bubble-wrapper {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+}
+
+/* Wave animation classes (Unity animation samples) */
+.bubble-wave-1 {
+    animation-name: wave-float-1;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.bubble-wave-2 {
+    animation-name: wave-float-2;
+    animation-duration: 3.5s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.bubble-wave-3 {
+    animation-name: wave-float-3;
+    animation-duration: 4s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+/* Wave animation keyframes (Unity keyframe samples) */
+@keyframes wave-float-1 {
+    0% { translate: 0px 0px; }
+    25% { translate: 5px -10px; }
+    50% { translate: 0px -5px; }
+    75% { translate: -5px -10px; }
+    100% { translate: 0px 0px; }
+}
+
+@keyframes wave-float-2 {
+    0% { translate: 0px 0px; }
+    25% { translate: -7px -8px; }
+    50% { translate: 0px -12px; }
+    75% { translate: 7px -8px; }
+    100% { translate: 0px 0px; }
+}
+
+@keyframes wave-float-3 {
+    0% { translate: 0px 0px; }
+    25% { translate: 3px -15px; }
+    50% { translate: 0px -3px; }
+    75% { translate: -3px -15px; }
+    100% { translate: 0px 0px; }
+}
+
+/* Breathing animation (Unity breathing samples) */
+.bubble-breathing {
+    animation-name: bubble-breathe;
+    animation-duration: 4s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes bubble-breathe {
+    0% { scale: 1.0; opacity: 0.8; }
+    50% { scale: 1.05; opacity: 0.9; }
+    100% { scale: 1.0; opacity: 0.8; }
+}
+
+/* Glass reflection effect (Unity glass samples) */
+.bubble-glass-reflection {
+    background-image: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.1) 30%,
+        rgba(255, 255, 255, 0.0) 50%,
+        rgba(255, 255, 255, 0.1) 70%,
+        rgba(255, 255, 255, 0.3) 100%
+    );
+}
+
+/* Underlight glow effect (Unity glow samples) */
+.bubble-underlight {
+    box-shadow: 
+        0px 0px 20px rgba(255, 102, 204, 0.5),
+        inset 0px -10px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile optimization classes (Unity mobile samples) */
+.bubble-mobile-optimized {
+    /* Reduced effects for mobile performance */
+    text-shadow: none;
+    box-shadow: none;
+    transition-duration: 0.1s;
+}
+
+.bubble-mobile-low-quality {
+    /* Minimal effects for low-end mobile */
+    background-color: rgba(255, 102, 204, 0.6);
+    border-width: 1px;
+    opacity: 0.7;
+}
+
+/* Quest 3 specific optimizations (Unity Quest samples) */
+.bubble-quest3-optimized {
+    /* Optimized for Quest 3 mobile GPU */
+    border-radius: 50px; /* Simplified border radius */
+    text-shadow: 0px 0px 5px rgba(255, 102, 204, 0.5); /* Reduced glow */
+    transition-duration: 0.15s; /* Slightly longer for 72fps */
+}
+
+/* Accessibility support (Unity accessibility samples) */
+.bubble-high-contrast {
+    border-width: 3px;
+    border-color: white;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.bubble-large-text {
+    font-size: 18px;
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+}
+
+/* Debug styling (Unity debug samples) */
+.bubble-debug {
+    border-color: red;
+    border-width: 2px;
+    background-color: rgba(255, 0, 0, 0.2);
+}
+
+.bubble-debug::after {
+    content: "DEBUG";
+    position: absolute;
+    top: -20px;
+    left: 0px;
+    color: red;
+    font-size: 10px;
+}
+
+/* Performance monitoring indicators (Unity profiler samples) */
+.bubble-performance-good {
+    border-color: rgba(0, 255, 0, 0.5);
+}
+
+.bubble-performance-warning {
+    border-color: rgba(255, 255, 0, 0.5);
+}
+
+.bubble-performance-critical {
+    border-color: rgba(255, 0, 0, 0.5);
+    animation-name: performance-warning;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes performance-warning {
+    0% { opacity: 0.8; }
+    50% { opacity: 0.4; }
+    100% { opacity: 0.8; }
+}

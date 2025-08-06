@@ -1,0 +1,23 @@
+{
+    "name": "XRBubbleLibrary.Integration",
+    "rootNamespace": "XRBubbleLibrary",
+    "references": [
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.XR.Interaction.Toolkit",
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Physics",
+        "XRBubbleLibrary.UI",
+        "XRBubbleLibrary.Interactions",
+        "XRBubbleLibrary.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

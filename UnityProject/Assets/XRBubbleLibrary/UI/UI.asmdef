@@ -1,0 +1,20 @@
+{
+    "name": "XRBubbleLibrary.UI",
+    "rootNamespace": "XRBubbleLibrary",
+    "references": [
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Physics",
+        "XRBubbleLibrary.Mathematics",
+        "XRBubbleLibrary.Interactions",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

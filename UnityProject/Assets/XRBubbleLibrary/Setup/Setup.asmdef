@@ -1,0 +1,23 @@
+{
+    "name": "XRBubbleLibrary.Setup",
+    "rootNamespace": "XRBubbleLibrary",
+    "references": [
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.Management",
+        "Unity.XR.Hands",
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Interactions"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

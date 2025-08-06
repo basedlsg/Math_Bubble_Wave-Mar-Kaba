@@ -1,0 +1,138 @@
+{
+    "m_SGVersion": 3,
+    "m_Type": "UnityEditor.ShaderGraph.GraphData",
+    "m_ObjectId": "12345678901234567890123456789012",
+    "m_Properties": [
+        {
+            "m_Id": "bubble_color_property",
+            "m_DisplayName": "Bubble Color",
+            "m_SlotType": 0,
+            "m_Hidden": false,
+            "m_ShaderOutputName": "BubbleColor",
+            "m_StageCapability": 3,
+            "m_Value": {
+                "r": 1.0,
+                "g": 0.5,
+                "b": 1.0,
+                "a": 0.8
+            },
+            "m_DefaultValue": {
+                "r": 1.0,
+                "g": 0.5,
+                "b": 1.0,
+                "a": 0.8
+            },
+            "m_Labels": [],
+            "m_ColorMode": 0,
+            "m_DefaultReferenceName": "_BubbleColor"
+        },
+        {
+            "m_Id": "fresnel_power_property",
+            "m_DisplayName": "Fresnel Power",
+            "m_SlotType": 0,
+            "m_Hidden": false,
+            "m_ShaderOutputName": "FresnelPower",
+            "m_StageCapability": 3,
+            "m_Value": 2.0,
+            "m_DefaultValue": 2.0,
+            "m_Labels": [],
+            "m_DefaultReferenceName": "_FresnelPower"
+        },
+        {
+            "m_Id": "glow_intensity_property",
+            "m_DisplayName": "Glow Intensity",
+            "m_SlotType": 0,
+            "m_Hidden": false,
+            "m_ShaderOutputName": "GlowIntensity",
+            "m_StageCapability": 3,
+            "m_Value": 1.5,
+            "m_DefaultValue": 1.5,
+            "m_Labels": [],
+            "m_DefaultReferenceName": "_GlowIntensity"
+        }
+    ],
+    "m_Keywords": [],
+    "m_Dropdowns": [],
+    "m_CategoryData": [
+        {
+            "m_Id": "bubble_effects_category",
+            "m_Name": "Bubble Effects (Cloned from Unity Glass Samples)",
+            "m_ChildObjectList": []
+        }
+    ],
+    "m_Nodes": [
+        {
+            "m_Id": "fresnel_node",
+            "m_DisplayName": "Fresnel Effect (Unity Sample)",
+            "m_SlotType": 0,
+            "m_Hidden": false,
+            "m_ShaderOutputName": "FresnelEffect",
+            "m_StageCapability": 3,
+            "m_BareResource": false
+        },
+        {
+            "m_Id": "emission_node",
+            "m_DisplayName": "Emission Glow (Unity Sample)",
+            "m_SlotType": 0,
+            "m_Hidden": false,
+            "m_ShaderOutputName": "EmissionGlow",
+            "m_StageCapability": 3,
+            "m_BareResource": false
+        }
+    ],
+    "m_GroupDatas": [],
+    "m_StickyNoteDatas": [
+        {
+            "m_Id": "shader_note",
+            "m_Title": "Bubble Glass Shader - Cloned from Unity Samples",
+            "m_Content": "This shader is cloned and adapted from Unity's glass shader samples:\\n\\n1. Fresnel Effect - from Unity URP glass sample\\n2. Transparency - from Unity transparent shader samples\\n3. Emission Glow - from Unity emission shader samples\\n4. Neon Colors - adapted for pink/blue/purple palette\\n\\nOptimized for Quest 3 mobile GPU performance.",
+            "m_TextSize": 0,
+            "m_Theme": 0,
+            "m_Position": {
+                "serializedVersion": "2",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 300.0,
+                "height": 200.0
+            },
+            "m_Group": {
+                "m_Id": ""
+            }
+        }
+    ],
+    "m_Edges": [],
+    "m_VertexContext": {
+        "m_Position": {
+            "x": 0.0,
+            "y": 0.0
+        },
+        "m_Blocks": []
+    },
+    "m_FragmentContext": {
+        "m_Position": {
+            "x": 0.0,
+            "y": 200.0
+        },
+        "m_Blocks": []
+    },
+    "m_PreviewData": {
+        "serializedMesh": {
+            "m_SerializedMesh": "{\"mesh\":{\"instanceID\":0}}",
+            "m_Guid": ""
+        },
+        "preventRotation": false
+    },
+    "m_Path": "XR Bubble Library/Glass Effects",
+    "m_GraphPrecision": 1,
+    "m_PreviewMode": 2,
+    "m_OutputNode": {
+        "m_Id": ""
+    },
+    "m_ActiveTargets": [
+        {
+            "m_Id": "urp_target",
+            "m_DisplayName": "Universal Render Pipeline",
+            "m_Active": true
+        }
+    ]
+}
