@@ -1,15 +1,10 @@
 {
     "name": "XRBubbleLibrary.Integration",
-    "rootNamespace": "XRBubbleLibrary",
+    "rootNamespace": "XRBubbleLibrary.Integration",
     "references": [
-        "Unity.Mathematics",
-        "Unity.Collections",
-        "Unity.XR.Interaction.Toolkit",
         "XRBubbleLibrary.Core",
-        "XRBubbleLibrary.Physics",
-        "XRBubbleLibrary.UI",
-        "XRBubbleLibrary.Interactions",
-        "XRBubbleLibrary.Mathematics"
+        "XRBubbleLibrary.Mathematics",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

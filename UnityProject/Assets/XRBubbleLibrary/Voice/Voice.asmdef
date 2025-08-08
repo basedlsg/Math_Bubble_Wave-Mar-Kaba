@@ -1,0 +1,17 @@
+{
+    "name": "XRBubbleLibrary.Voice",
+    "rootNamespace": "XRBubbleLibrary.Voice",
+    "references": [
+        "XRBubbleLibrary.Core",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": ["EXP_VOICE"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

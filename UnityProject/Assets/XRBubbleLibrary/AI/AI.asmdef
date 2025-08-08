@@ -11,8 +11,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
+    "autoReferenced": false,
+    "defineConstraints": ["EXP_AI"],
     "versionDefines": [],
     "noEngineReferences": false
 }

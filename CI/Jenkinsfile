@@ -1,0 +1,419 @@
+pipeline {
+    agent any
+    
+    // Pipeline parameters
+    parameters {
+        string(name: 'MIN_FPS', defaultValue: '60.0', description: 'Minimum FPS threshold')
+        string(name: 'MAX_MEMORY', defaultValue: '1024.0', description: 'Maximum memory usage (MB)')
+        string(name: 'MAX_FRAME_TIME', defaultValue: '16.67', description: 'Maximum frame time (ms)')
+        booleanParam(name: 'FAIL_ON_WARNINGS', defaultValue: false, description: 'Fail build on warnings')
+        choice(name: 'UNITY_VERSION', choices: ['2022.3.0f1', '2022.3.1f1', '2022.3.2f1'], description: 'Unity version to use')
+        choice(name: 'TARGET_PLATFORM', choices: ['StandaloneLinux64', 'StandaloneWindows64', 'StandaloneOSX'], description: 'Target platform for build')
+    }
+    
+    // Environment variables
+    environment {
+        UNITY_PATH = '/opt/Unity/Editor/Unity'
+        PROJECT_PATH = "${WORKSPACE}/UnityProject"
+        BUILD_ID = "${BUILD_NUMBER}-${GIT_COMMIT.take(8)}"
+        REPORTS_DIR = "${WORKSPACE}/PerformanceReports"
+        ARTIFACTS_DIR = "${WORKSPACE}/artifacts"
+    }
+    
+    // Build options
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 45, unit: 'MINUTES')
+        timestamps()
+        ansiColor('xterm')
+    }
+    
+    // Trigger configuration
+    triggers {
+        // Poll SCM every 5 minutes for changes
+        pollSCM('H/5 * * * *')
+        
+        // Trigger nightly builds
+        cron('H 2 * * *')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "🔄 Checking out source code..."
+                checkout scm
+                
+                script {
+                    // Set build description
+                    currentBuild.description = "Build ${BUILD_ID} - Unity ${params.UNITY_VERSION}"
+                    
+                    // Print build information
+                    echo "Build Information:"
+                    echo "  Build ID: ${BUILD_ID}"
+                    echo "  Unity Version: ${params.UNITY_VERSION}"
+                    echo "  Target Platform: ${params.TARGET_PLATFORM}"
+                    echo "  Min FPS: ${params.MIN_FPS}"
+                    echo "  Max Memory: ${params.MAX_MEMORY} MB"
+                    echo "  Fail on Warnings: ${params.FAIL_ON_WARNINGS}"
+                }
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                echo "🔧 Setting up build environment..."
+                
+                script {
+                    // Create necessary directories
+                    sh """
+                        mkdir -p ${REPORTS_DIR}
+                        mkdir -p ${ARTIFACTS_DIR}
+                        mkdir -p ${PROJECT_PATH}/Library
+                    """
+                    
+                    // Check Unity installation
+                    sh """
+                        if [ ! -f "${UNITY_PATH}" ]; then
+                            echo "❌ Unity not found at: ${UNITY_PATH}"
+                            echo "Available Unity installations:"
+                            find /opt -name "Unity" -type f 2>/dev/null || echo "No Unity installations found"
+                            exit 1
+                        fi
+                        
+                        echo "✅ Unity found at: ${UNITY_PATH}"
+                        ${UNITY_PATH} -version || echo "Could not get Unity version"
+                    """
+                }
+            }
+        }
+        
+        stage('Validate Configuration') {
+            steps {
+                echo "🔍 Validating performance gate configuration..."
+                
+                script {
+                    try {
+                        sh """
+                            cd ${WORKSPACE}
+                            chmod +x CI/Scripts/run-performance-gates.sh
+                            CI/Scripts/run-performance-gates.sh validate \\
+                                --unity-path "${UNITY_PATH}" \\
+                                --project-path "${PROJECT_PATH}" \\
+                                --build-id "${BUILD_ID}" \\
+                                --log-file "${ARTIFACTS_DIR}/configuration-validation.log"
+                        """
+                        
+                        echo "✅ Configuration validation passed"
+                    } catch (Exception e) {
+                        echo "❌ Configuration validation failed: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Configuration validation failed")
+                    }
+                }
+            }
+            
+            post {
+                always {
+                    archiveArtifacts artifacts: 'artifacts/configuration-validation.log', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        stage('Run Performance Gates') {
+            parallel {
+                stage('All Gates') {
+                    steps {
+                        echo "🚀 Running all performance gates..."
+                        
+                        script {
+                            try {
+                                sh """
+                                    cd ${WORKSPACE}
+                                    CI/Scripts/run-performance-gates.sh all \\
+                                        --unity-path "${UNITY_PATH}" \\
+                                        --project-path "${PROJECT_PATH}" \\
+                                        --build-id "${BUILD_ID}" \\
+                                        --min-fps "${params.MIN_FPS}" \\
+                                        --max-frame-time "${params.MAX_FRAME_TIME}" \\
+                                        --max-memory "${params.MAX_MEMORY}" \\
+                                        ${params.FAIL_ON_WARNINGS ? '--fail-on-warnings' : ''} \\
+                                        --log-file "${ARTIFACTS_DIR}/all-gates.log"
+                                """
+                                
+                                echo "✅ All performance gates passed"
+                            } catch (Exception e) {
+                                echo "❌ Performance gates failed: ${e.getMessage()}"
+                                currentBuild.result = 'FAILURE'
+                                error("Performance gates failed - build blocked")
+                            }
+                        }
+                    }
+                }
+                
+                stage('Unit Tests') {
+                    steps {
+                        echo "🧪 Running unit tests gate..."
+                        
+                        script {
+                            try {
+                                sh """
+                                    cd ${WORKSPACE}
+                                    CI/Scripts/run-performance-gates.sh gate "Unit Tests" \\
+                                        --unity-path "${UNITY_PATH}" \\
+                                        --project-path "${PROJECT_PATH}" \\
+                                        --build-id "${BUILD_ID}" \\
+                                        --log-file "${ARTIFACTS_DIR}/unit-tests.log"
+                                """
+                                
+                                echo "✅ Unit tests gate passed"
+                            } catch (Exception e) {
+                                echo "❌ Unit tests gate failed: ${e.getMessage()}"
+                                // Don't fail the build for individual gate failures in parallel
+                                unstable("Unit tests gate failed")
+                            }
+                        }
+                    }
+                }
+                
+                stage('Burst Compilation') {
+                    steps {
+                        echo "⚡ Running Burst compilation gate..."
+                        
+                        script {
+                            try {
+                                sh """
+                                    cd ${WORKSPACE}
+                                    CI/Scripts/run-performance-gates.sh gate "Burst Compilation" \\
+                                        --unity-path "${UNITY_PATH}" \\
+                                        --project-path "${PROJECT_PATH}" \\
+                                        --build-id "${BUILD_ID}" \\
+                                        --log-file "${ARTIFACTS_DIR}/burst-compilation.log"
+                                """
+                                
+                                echo "✅ Burst compilation gate passed"
+                            } catch (Exception e) {
+                                echo "❌ Burst compilation gate failed: ${e.getMessage()}"
+                                unstable("Burst compilation gate failed")
+                            }
+                        }
+                    }
+                }
+                
+                stage('Performance Profiling') {
+                    steps {
+                        echo "📊 Running performance profiling gate..."
+                        
+                        script {
+                            try {
+                                sh """
+                                    cd ${WORKSPACE}
+                                    CI/Scripts/run-performance-gates.sh gate "Performance Profiling" \\
+                                        --unity-path "${UNITY_PATH}" \\
+                                        --project-path "${PROJECT_PATH}" \\
+                                        --build-id "${BUILD_ID}" \\
+                                        --min-fps "${params.MIN_FPS}" \\
+                                        --max-memory "${params.MAX_MEMORY}" \\
+                                        --log-file "${ARTIFACTS_DIR}/performance-profiling.log"
+                                """
+                                
+                                echo "✅ Performance profiling gate passed"
+                            } catch (Exception e) {
+                                echo "❌ Performance profiling gate failed: ${e.getMessage()}"
+                                unstable("Performance profiling gate failed")
+                            }
+                        }
+                    }
+                }
+            }
+            
+            post {
+                always {
+                    // Archive all gate logs
+                    archiveArtifacts artifacts: 'artifacts/*.log', allowEmptyArchive: true
+                    
+                    // Archive performance reports
+                    archiveArtifacts artifacts: 'PerformanceReports/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'PerformanceProfilingReports/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'BurstCompilationReports/**/*', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        stage('Generate Reports') {
+            steps {
+                echo "📋 Generating performance reports..."
+                
+                script {
+                    try {
+                        // Generate Unity performance report
+                        sh """
+                            cd ${WORKSPACE}
+                            CI/Scripts/run-performance-gates.sh report \\
+                                --unity-path "${UNITY_PATH}" \\
+                                --project-path "${PROJECT_PATH}" \\
+                                --build-id "${BUILD_ID}" \\
+                                --log-file "${ARTIFACTS_DIR}/report-generation.log"
+                        """
+                        
+                        // Run Python analysis script
+                        sh """
+                            cd ${WORKSPACE}
+                            python3 CI/Scripts/analyze-performance.py artifacts/ \\
+                                --output-dir performance-analysis \\
+                                --verbose
+                        """
+                        
+                        echo "✅ Performance reports generated successfully"
+                    } catch (Exception e) {
+                        echo "⚠️ Report generation failed: ${e.getMessage()}"
+                        // Don't fail the build for report generation issues
+                        unstable("Report generation failed")
+                    }
+                }
+            }
+            
+            post {
+                always {
+                    // Archive analysis results
+                    archiveArtifacts artifacts: 'performance-analysis/**/*', allowEmptyArchive: true
+                    
+                    // Publish HTML reports if available
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'performance-analysis',
+                        reportFiles: '*.html',
+                        reportName: 'Performance Analysis Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            
+            steps {
+                echo "🎯 Evaluating quality gate..."
+                
+                script {
+                    // Check if any critical gates failed
+                    def criticalFailures = sh(
+                        script: "grep -l 'CRITICAL.*FAILED' artifacts/*.log || true",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (criticalFailures) {
+                        echo "❌ Critical performance gates failed:"
+                        sh "echo '${criticalFailures}' | xargs -I {} basename {}"
+                        currentBuild.result = 'FAILURE'
+                        error("Critical performance gates failed - blocking deployment")
+                    }
+                    
+                    // Check performance thresholds
+                    def performanceIssues = sh(
+                        script: "grep -l 'Performance.*below.*threshold' artifacts/*.log || true",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (performanceIssues) {
+                        echo "⚠️ Performance threshold violations detected"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                    
+                    echo "✅ Quality gate evaluation completed"
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.result != 'FAILURE' }
+                }
+            }
+            
+            steps {
+                echo "🚀 Deploying build..."
+                
+                script {
+                    // This is where you would trigger your deployment
+                    echo "Build ${BUILD_ID} is ready for deployment"
+                    echo "All performance gates have passed successfully"
+                    
+                    // Example deployment steps:
+                    // - Upload build artifacts to deployment server
+                    // - Trigger deployment pipeline
+                    // - Update deployment status
+                    
+                    sh """
+                        echo "Deployment would be triggered here"
+                        echo "Build ID: ${BUILD_ID}"
+                        echo "Commit: ${GIT_COMMIT}"
+                        echo "Branch: ${GIT_BRANCH}"
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "🧹 Cleaning up..."
+            
+            // Clean up workspace but keep artifacts
+            cleanWs(
+                cleanWhenAborted: true,
+                cleanWhenFailure: false,
+                cleanWhenNotBuilt: true,
+                cleanWhenSuccess: true,
+                cleanWhenUnstable: false,
+                deleteDirs: true,
+                disableDeferredWipeout: true,
+                notFailBuild: true,
+                patterns: [
+                    [pattern: 'UnityProject/Library/**', type: 'EXCLUDE'],
+                    [pattern: 'artifacts/**', type: 'EXCLUDE'],
+                    [pattern: 'PerformanceReports/**', type: 'EXCLUDE']
+                ]
+            )
+        }
+        
+        success {
+            echo "✅ Build completed successfully!"
+            
+            // Send success notification
+            script {
+                if (env.BRANCH_NAME == 'main') {
+                    // Notify deployment team
+                    echo "Notifying deployment team of successful build"
+                }
+            }
+        }
+        
+        failure {
+            echo "❌ Build failed!"
+            
+            // Send failure notification
+            script {
+                echo "Build ${BUILD_ID} failed - performance gates blocked the build"
+                echo "Check the performance reports for details"
+            }
+        }
+        
+        unstable {
+            echo "⚠️ Build completed with warnings"
+            
+            script {
+                echo "Build ${BUILD_ID} completed but some performance gates had issues"
+                echo "Review the performance reports and consider addressing the warnings"
+            }
+        }
+    }
+}

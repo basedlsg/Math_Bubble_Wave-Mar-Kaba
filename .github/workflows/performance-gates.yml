@@ -1,0 +1,326 @@
+name: Performance Gates CI/CD
+
+# Trigger the workflow on push to main/develop branches and pull requests
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      min_fps:
+        description: 'Minimum FPS threshold'
+        required: false
+        default: '60.0'
+      max_memory:
+        description: 'Maximum memory usage (MB)'
+        required: false
+        default: '1024.0'
+      fail_on_warnings:
+        description: 'Fail build on warnings'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Environment variables
+env:
+  UNITY_VERSION: 2022.3.0f1
+  MIN_FPS: ${{ github.event.inputs.min_fps || '60.0' }}
+  MAX_MEMORY: ${{ github.event.inputs.max_memory || '1024.0' }}
+  FAIL_ON_WARNINGS: ${{ github.event.inputs.fail_on_warnings || 'false' }}
+
+jobs:
+  # Job 1: Validate Configuration
+  validate-configuration:
+    name: Validate Gate Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    
+    - name: Cache Unity Library
+      uses: actions/cache@v3
+      with:
+        path: UnityProject/Library
+        key: Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ hashFiles('UnityProject/ProjectSettings/**') }}
+        restore-keys: |
+          Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
+          Library-${{ runner.os }}-
+    
+    - name: Setup Unity
+      uses: game-ci/unity-builder@v4
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        projectPath: UnityProject
+        unityVersion: ${{ env.UNITY_VERSION }}
+        targetPlatform: StandaloneLinux64
+        customParameters: -executeMethod XRBubbleLibrary.Core.Editor.PerformanceGateCommandLine.ValidateGateConfigurationFromCommandLine -quit
+    
+    - name: Upload Configuration Validation Logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: configuration-validation-logs
+        path: |
+          UnityProject/performance-gates.log
+          UnityProject/Library/Logs/
+        retention-days: 7
+
+  # Job 2: Run Performance Gates
+  run-performance-gates:
+    name: Run Performance Gates
+    runs-on: ubuntu-latest
+    needs: validate-configuration
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        gate: ['all', 'Unit Tests', 'Burst Compilation', 'Performance Stub Test', 'Performance Profiling']
+      fail-fast: false
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    
+    - name: Cache Unity Library
+      uses: actions/cache@v3
+      with:
+        path: UnityProject/Library
+        key: Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ hashFiles('UnityProject/ProjectSettings/**') }}
+        restore-keys: |
+          Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
+          Library-${{ runner.os }}-
+    
+    - name: Setup Unity
+      uses: game-ci/unity-builder@v4
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        projectPath: UnityProject
+        unityVersion: ${{ env.UNITY_VERSION }}
+        targetPlatform: StandaloneLinux64
+        customParameters: >
+          -executeMethod XRBubbleLibrary.Core.Editor.PerformanceGateCommandLine.RunAllGatesFromCommandLine
+          -buildId ${{ github.run_id }}
+          -minFPS ${{ env.MIN_FPS }}
+          -maxMemory ${{ env.MAX_MEMORY }}
+          -failOnWarnings ${{ env.FAIL_ON_WARNINGS }}
+          -quit
+      continue-on-error: ${{ matrix.gate != 'all' }}
+    
+    - name: Run Specific Gate
+      if: matrix.gate != 'all'
+      uses: game-ci/unity-builder@v4
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        projectPath: UnityProject
+        unityVersion: ${{ env.UNITY_VERSION }}
+        targetPlatform: StandaloneLinux64
+        customParameters: >
+          -executeMethod XRBubbleLibrary.Core.Editor.PerformanceGateCommandLine.RunSpecificGateFromCommandLine
+          -gateName "${{ matrix.gate }}"
+          -buildId ${{ github.run_id }}
+          -minFPS ${{ env.MIN_FPS }}
+          -maxMemory ${{ env.MAX_MEMORY }}
+          -failOnWarnings ${{ env.FAIL_ON_WARNINGS }}
+          -quit
+    
+    - name: Generate Performance Report
+      if: always()
+      uses: game-ci/unity-builder@v4
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        projectPath: UnityProject
+        unityVersion: ${{ env.UNITY_VERSION }}
+        targetPlatform: StandaloneLinux64
+        customParameters: -executeMethod XRBubbleLibrary.Core.Editor.PerformanceGateCommandLine.GenerateReportFromCommandLine -quit
+      continue-on-error: true
+    
+    - name: Upload Performance Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports-${{ matrix.gate }}
+        path: |
+          PerformanceReports/
+          PerformanceProfilingReports/
+          BurstCompilationReports/
+          UnityProject/performance-gates.log
+        retention-days: 30
+    
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.gate }}
+        path: |
+          UnityProject/Library/Logs/
+          UnityProject/TestResults/
+        retention-days: 7
+
+  # Job 3: Windows Performance Gates
+  run-performance-gates-windows:
+    name: Run Performance Gates (Windows)
+    runs-on: windows-latest
+    needs: validate-configuration
+    timeout-minutes: 30
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    
+    - name: Cache Unity Library
+      uses: actions/cache@v3
+      with:
+        path: UnityProject/Library
+        key: Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ hashFiles('UnityProject/ProjectSettings/**') }}
+        restore-keys: |
+          Library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
+          Library-${{ runner.os }}-
+    
+    - name: Run Performance Gates (Windows Script)
+      shell: cmd
+      env:
+        BUILD_ID: ${{ github.run_id }}
+        CI_ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
+      run: |
+        CI\Scripts\run-performance-gates.bat --min-fps %MIN_FPS% --max-memory %MAX_MEMORY% --fail-on-warnings %FAIL_ON_WARNINGS%
+    
+    - name: Upload Windows Performance Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports-windows
+        path: |
+          artifacts/
+          performance-gates.log
+        retention-days: 30
+
+  # Job 4: Performance Analysis and Reporting
+  analyze-performance:
+    name: Analyze Performance Results
+    runs-on: ubuntu-latest
+    needs: [run-performance-gates]
+    if: always()
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Download All Performance Reports
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Analysis Dependencies
+      run: |
+        pip install pandas matplotlib seaborn
+    
+    - name: Analyze Performance Data
+      run: |
+        python CI/Scripts/analyze-performance.py artifacts/
+      continue-on-error: true
+    
+    - name: Generate Performance Summary
+      run: |
+        echo "# Performance Gates Summary" > performance-summary.md
+        echo "" >> performance-summary.md
+        echo "**Build ID**: ${{ github.run_id }}" >> performance-summary.md
+        echo "**Commit**: ${{ github.sha }}" >> performance-summary.md
+        echo "**Branch**: ${{ github.ref_name }}" >> performance-summary.md
+        echo "" >> performance-summary.md
+        
+        # Check if any gates failed
+        if find artifacts/ -name "*.log" -exec grep -l "FAILED" {} \; | head -1; then
+          echo "❌ **Status**: FAILED - Performance gates blocked the build" >> performance-summary.md
+        else
+          echo "✅ **Status**: PASSED - All performance gates succeeded" >> performance-summary.md
+        fi
+        
+        echo "" >> performance-summary.md
+        echo "## Gate Results" >> performance-summary.md
+        echo "" >> performance-summary.md
+        
+        # List all gate results
+        for gate in "Unit Tests" "Burst Compilation" "Performance Stub Test" "Performance Profiling"; do
+          if find artifacts/ -name "*$gate*" -type d | head -1; then
+            echo "- **$gate**: Results available" >> performance-summary.md
+          else
+            echo "- **$gate**: No results found" >> performance-summary.md
+          fi
+        done
+    
+    - name: Comment Performance Summary on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('performance-summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+    
+    - name: Upload Performance Analysis
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-analysis
+        path: |
+          performance-summary.md
+          performance-analysis/
+        retention-days: 30
+
+  # Job 5: Deployment Gate (only on main branch)
+  deployment-gate:
+    name: Deployment Gate
+    runs-on: ubuntu-latest
+    needs: [run-performance-gates, run-performance-gates-windows]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Verify All Gates Passed
+      run: |
+        echo "All performance gates have passed successfully"
+        echo "Build is ready for deployment"
+        echo "Build ID: ${{ github.run_id }}"
+        echo "Commit: ${{ github.sha }}"
+    
+    - name: Trigger Deployment
+      run: |
+        echo "Deployment would be triggered here"
+        echo "This is where you would call your deployment system"
+        # Example: curl -X POST $DEPLOYMENT_WEBHOOK_URL -d '{"build_id": "${{ github.run_id }}"}'

@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using XRBubbleLibrary.AI;
 using XRBubbleLibrary.Mathematics;
 using XRBubbleLibrary.Audio;
+#if EXP_VOICE
 using XRBubbleLibrary.Voice;
+#endif
 using XRBubbleLibrary.UI;
 using XRBubbleLibrary.Performance;
 
@@ -22,7 +24,9 @@ namespace XRBubbleLibrary.Integration
         public LocalAIModel aiModel;
         public AdvancedWaveSystem waveSystem;
         public SteamAudioRenderer audioRenderer;
+#if EXP_VOICE
         public OnDeviceVoiceProcessor voiceProcessor;
+#endif
         public BubbleUIManager bubbleUIManager;
         public BubblePerformanceManager performanceManager;
         
@@ -59,7 +63,9 @@ namespace XRBubbleLibrary.Integration
         // System events
         public System.Action<EnhancedBubble> OnBubbleCreated;
         public System.Action<EnhancedBubble> OnBubbleDestroyed;
+#if EXP_VOICE
         public System.Action<SpatialCommand> OnVoiceCommandExecuted;
+#endif
         
         void Start()
         {
@@ -140,6 +146,7 @@ namespace XRBubbleLibrary.Integration
                 }
             }
             
+#if EXP_VOICE
             // Voice Processor
             if (voiceProcessor == null && enableVoiceControl)
             {
@@ -149,9 +156,18 @@ namespace XRBubbleLibrary.Integration
                     var voiceObject = new GameObject("OnDeviceVoiceProcessor");
                     voiceObject.transform.SetParent(transform);
                     voiceProcessor = voiceObject.AddComponent<OnDeviceVoiceProcessor>();
+#if EXP_AI
                     voiceProcessor.aiModel = aiModel;
+#endif
                 }
             }
+#else
+            if (enableVoiceControl)
+            {
+                Debug.LogWarning("[AIEnhancedBubbleSystem] Voice control requested but EXP_VOICE is disabled. Enable EXP_VOICE compiler flag to use voice features.");
+                enableVoiceControl = false;
+            }
+#endif
             
             // Performance Manager
             if (performanceManager == null && enablePerformanceOptimization)
@@ -172,12 +188,14 @@ namespace XRBubbleLibrary.Integration
                 waveSystem.enableAIOptimization = enableAIEnhancement;
             }
             
+#if EXP_VOICE && EXP_AI
             // Connect voice processor to AI model
             if (voiceProcessor != null && aiModel != null)
             {
                 voiceProcessor.aiModel = aiModel;
                 voiceProcessor.enableAIEnhancement = enableAIEnhancement;
             }
+#endif
             
             // Setup performance monitoring
             if (performanceManager != null)
@@ -290,6 +308,7 @@ namespace XRBubbleLibrary.Integration
             return enhancedBubble;
         }
         
+#if EXP_VOICE
         /// <summary>
         /// Process voice command for spatial arrangement
         /// </summary>
@@ -328,6 +347,15 @@ namespace XRBubbleLibrary.Integration
                 audioRenderer.PlayGlassClinkSound(userPos, command.confidence);
             }
         }
+#else
+        /// <summary>
+        /// Stub method for voice command processing when voice is disabled
+        /// </summary>
+        public void ProcessVoiceCommand(object command)
+        {
+            Debug.LogWarning("[AIEnhancedBubbleSystem] Voice command processing is disabled. Enable EXP_VOICE compiler flag to use voice features.");
+        }
+#endif
         
         /// <summary>
         /// Arrange existing bubbles at new positions
@@ -521,7 +549,11 @@ namespace XRBubbleLibrary.Integration
                 aiModelMetrics = aiModel?.GetPerformanceMetrics() ?? default,
                 waveSystemMetrics = waveSystem?.GetPerformanceMetrics() ?? default,
                 audioMetrics = audioRenderer?.GetPerformanceMetrics() ?? default,
+#if EXP_VOICE
                 voiceMetrics = voiceProcessor?.GetPerformanceMetrics() ?? default
+#else
+                voiceMetrics = default
+#endif
             };
         }
         
@@ -586,8 +618,10 @@ namespace XRBubbleLibrary.Integration
             if (waveSystem != null)
                 waveSystem.enableAIOptimization = enabled;
                 
+#if EXP_VOICE
             if (voiceProcessor != null)
                 voiceProcessor.enableAIEnhancement = enabled;
+#endif
         }
         
         /// <summary>
@@ -595,10 +629,14 @@ namespace XRBubbleLibrary.Integration
         /// </summary>
         public async void TestVoiceCommand(string command)
         {
+#if EXP_VOICE
             if (voiceProcessor != null)
             {
                 voiceProcessor.ProcessTestCommand(command);
             }
+#else
+            Debug.LogWarning("[AIEnhancedBubbleSystem] Voice command testing is disabled. Enable EXP_VOICE compiler flag to use voice features.");
+#endif
         }
     }
     
@@ -669,7 +707,11 @@ namespace XRBubbleLibrary.Integration
         public AIPerformanceMetrics aiModelMetrics;
         public WaveSystemMetrics waveSystemMetrics;
         public SteamAudioMetrics audioMetrics;
+#if EXP_VOICE
         public VoiceProcessorMetrics voiceMetrics;
+#else
+        public object voiceMetrics;
+#endif
         
         public override string ToString()
         {
@@ -677,7 +719,11 @@ namespace XRBubbleLibrary.Integration
                    $"AI: {aiModelMetrics}\n" +
                    $"Wave: {waveSystemMetrics}\n" +
                    $"Audio: {audioMetrics}\n" +
+#if EXP_VOICE
                    $"Voice: {voiceMetrics}";
+#else
+                   $"Voice: DISABLED (Enable EXP_VOICE to use voice features)";
+#endif
         }
     }
 }

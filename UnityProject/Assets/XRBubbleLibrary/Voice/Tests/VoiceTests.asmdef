@@ -1,0 +1,24 @@
+{
+    "name": "XRBubbleLibrary.Voice.Tests",
+    "rootNamespace": "XRBubbleLibrary.Voice.Tests",
+    "references": [
+        "XRBubbleLibrary.Core",
+        "XRBubbleLibrary.Voice",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

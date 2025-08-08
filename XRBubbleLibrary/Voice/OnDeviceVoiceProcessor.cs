@@ -1,9 +1,14 @@
+#if EXP_VOICE
 using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
+
+// Conditional AI import
+#if EXP_AI
 using XRBubbleLibrary.AI;
+#endif
 
 namespace XRBubbleLibrary.Voice
 {
@@ -11,7 +16,12 @@ namespace XRBubbleLibrary.Voice
     /// On-device voice processing system for XR bubble commands
     /// Optimized for Quest 3 with 20-50ms latency target
     /// Integrates with AI system for voice-to-spatial-arrangement
+    /// 
+    /// EXPERIMENTAL FEATURE: Requires EXP_VOICE compiler flag
+    /// Part of the "do-it-right" recovery Phase 0 implementation
     /// </summary>
+    [FeatureGate(ExperimentalFeature.VOICE_PROCESSING,
+                 ErrorMessage = "On-Device Voice Processor requires Voice Processing to be enabled")]
     public class OnDeviceVoiceProcessor : MonoBehaviour
     {
         [Header("Voice Recognition Configuration")]
@@ -24,8 +34,12 @@ namespace XRBubbleLibrary.Voice
         public float maxRecordingDuration = 5.0f;
         
         [Header("Spatial Command Processing")]
+#if EXP_AI
         public LocalAIModel aiModel;
         public bool enableAIEnhancement = true;
+#else
+        [SerializeField] private bool enableAIEnhancement = false;
+#endif
         
         [Range(0.5f, 1.0f)]
         public float commandConfidenceThreshold = 0.7f;
@@ -62,6 +76,9 @@ namespace XRBubbleLibrary.Voice
         
         void Start()
         {
+            // Validate feature access before initialization
+            CompilerFlags.ValidateFeatureAccess(ExperimentalFeature.VOICE_PROCESSING);
+            
             InitializeVoiceProcessor();
             InitializeCommandTemplates();
         }
@@ -100,6 +117,7 @@ namespace XRBubbleLibrary.Voice
             }
             
             // Initialize AI model reference
+#if EXP_AI
             if (aiModel == null)
             {
                 aiModel = FindObjectOfType<LocalAIModel>();
@@ -109,6 +127,13 @@ namespace XRBubbleLibrary.Voice
                     enableAIEnhancement = false;
                 }
             }
+#else
+            if (enableAIEnhancement)
+            {
+                Debug.LogWarning("[OnDeviceVoiceProcessor] AI enhancement requested but EXP_AI is disabled. Enable EXP_AI compiler flag to use AI features.");
+                enableAIEnhancement = false;
+            }
+#endif
         }
         
         /// <summary>
@@ -339,6 +364,7 @@ namespace XRBubbleLibrary.Voice
             }
             
             // If AI enhancement is enabled, use AI for complex commands
+#if EXP_AI
             if (enableAIEnhancement && aiModel != null)
             {
                 try
@@ -351,6 +377,7 @@ namespace XRBubbleLibrary.Voice
                     Debug.LogError($"AI command processing failed: {ex.Message}");
                 }
             }
+#endif
             
             // Return low-confidence fallback
             return new SpatialCommand
@@ -395,6 +422,7 @@ namespace XRBubbleLibrary.Voice
             };
         }
         
+#if EXP_AI
         /// <summary>
         /// Process command using AI enhancement
         /// </summary>
@@ -404,6 +432,7 @@ namespace XRBubbleLibrary.Voice
             var groqClient = new GroqAPIClient();
             return await groqClient.ProcessVoiceCommand(text, userPosition);
         }
+#endif
         
         /// <summary>
         /// Generate positions for arrangement patterns
@@ -616,8 +645,11 @@ namespace XRBubbleLibrary.Voice
         /// <summary>
         /// Manually trigger voice command processing (for testing)
         /// </summary>
+        [FeatureGate(ExperimentalFeature.VOICE_PROCESSING)]
         public async void ProcessTestCommand(string testCommand)
         {
+            CompilerFlags.ValidateFeatureAccess(ExperimentalFeature.VOICE_PROCESSING);
+            
             Debug.Log($"Processing test command: \"{testCommand}\"");
             
             var spatialCommand = await ProcessSpatialCommand(testCommand);
@@ -727,3 +759,106 @@ namespace XRBubbleLibrary.Voice
         }
     }
 }
+
+#else
+// Stub implementation when voice processing is disabled
+using UnityEngine;
+using Unity.Mathematics;
+
+namespace XRBubbleLibrary.Voice
+{
+    /// <summary>
+    /// Stub implementation of OnDeviceVoiceProcessor when voice processing is disabled.
+    /// Provides graceful degradation and clear messaging about disabled features.
+    /// </summary>
+    public class OnDeviceVoiceProcessor : MonoBehaviour
+    {
+        void Start()
+        {
+            Debug.LogWarning("[OnDeviceVoiceProcessor] Voice Processing is disabled. Enable EXP_VOICE compiler flag to use voice recognition features.");
+            
+            // Optionally disable this GameObject to prevent confusion
+            gameObject.SetActive(false);
+        }
+        
+        /// <summary>
+        /// Stub method for test commands
+        /// </summary>
+        public void ProcessTestCommand(string testCommand)
+        {
+            Debug.LogWarning("[OnDeviceVoiceProcessor] Voice Processing is disabled. Enable EXP_VOICE compiler flag to use voice commands.");
+        }
+        
+        /// <summary>
+        /// Stub method for performance metrics
+        /// </summary>
+        public VoiceProcessorMetrics GetPerformanceMetrics()
+        {
+            return new VoiceProcessorMetrics
+            {
+                lastProcessingTimeMs = 0f,
+                processedCommandsCount = 0,
+                recentCommandsCount = 0,
+                isRecording = false,
+                voiceProcessingEnabled = false,
+                aiEnhancementEnabled = false
+            };
+        }
+    }
+    
+    /// <summary>
+    /// Stub voice processor metrics for disabled state
+    /// </summary>
+    [System.Serializable]
+    public struct VoiceProcessorMetrics
+    {
+        public float lastProcessingTimeMs;
+        public int processedCommandsCount;
+        public int recentCommandsCount;
+        public bool isRecording;
+        public bool voiceProcessingEnabled;
+        public bool aiEnhancementEnabled;
+        
+        public override string ToString()
+        {
+            return "Voice Processor - DISABLED (Enable EXP_VOICE to use voice features)";
+        }
+    }
+    
+    /// <summary>
+    /// Stub spatial command for disabled state
+    /// </summary>
+    [System.Serializable]
+    public struct SpatialCommand
+    {
+        public SpatialAction action;
+        public float3[] positions;
+        public ArrangementPattern pattern;
+        public float confidence;
+    }
+    
+    /// <summary>
+    /// Spatial actions enum (always available for API consistency)
+    /// </summary>
+    public enum SpatialAction
+    {
+        None,
+        Arrange,
+        Create,
+        Delete,
+        Move
+    }
+    
+    /// <summary>
+    /// Arrangement patterns enum (always available for API consistency)
+    /// </summary>
+    public enum ArrangementPattern
+    {
+        None,
+        Circle,
+        Line,
+        Grid,
+        Spiral
+    }
+}
+#endif

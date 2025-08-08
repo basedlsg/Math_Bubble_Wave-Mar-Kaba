@@ -4,8 +4,9 @@ using Unity.Mathematics;
 namespace XRBubbleLibrary.WaveMatrix
 {
     /// <summary>
-    /// Core wave mathematics system for positioning word bubbles on a wave matrix
-    /// Provides real-time wave calculations optimized for VR performance
+    /// MonoBehaviour wrapper for the WaveMatrixCore system.
+    /// Provides Unity integration for positioning word bubbles on a wave matrix.
+    /// Now uses the optimized WaveMatrixCore for improved Quest 3 performance.
     /// </summary>
     public class WaveMatrixPositioner : MonoBehaviour
     {
@@ -13,8 +14,11 @@ namespace XRBubbleLibrary.WaveMatrix
         [SerializeField] private WaveMatrixSettings settings = WaveMatrixSettings.Default;
         
         [Header("Performance Settings")]
-        [SerializeField] private int maxBubbles = 30; // Reduced for Quest 3 performance
-        [SerializeField] private float updateFrequency = 15f; // Reduced from 60Hz for VR performance
+        [SerializeField] private int maxBubbles = 100; // Increased thanks to WaveMatrixCore optimization
+        [SerializeField] private float updateFrequency = 30f; // Improved performance allows higher frequency
+        
+        // Core wave mathematics system
+        private IWaveMatrixCore _waveCore;
         
         // Internal state
         private float currentTime = 0f;
@@ -44,6 +48,9 @@ namespace XRBubbleLibrary.WaveMatrix
         
         void InitializeWaveMatrix()
         {
+            // Initialize the core wave mathematics system
+            _waveCore = new WaveMatrixCore();
+            
             updateInterval = 1f / updateFrequency;
             cachedPositions = new float3[maxBubbles];
             positionsDirty = new bool[maxBubbles];
@@ -54,86 +61,79 @@ namespace XRBubbleLibrary.WaveMatrix
                 positionsDirty[i] = true;
             }
             
-            Debug.Log($"Wave Matrix initialized: {maxBubbles} max bubbles, {updateFrequency}Hz update rate");
+            // Validate settings
+            var validation = _waveCore.ValidateSettings(settings);
+            if (!validation.IsValid)
+            {
+                Debug.LogWarning($"[WaveMatrixPositioner] Settings validation issues: {string.Join(", ", validation.Issues)}");
+            }
+            
+            if (validation.Warnings.Length > 0)
+            {
+                Debug.LogWarning($"[WaveMatrixPositioner] Settings warnings: {string.Join(", ", validation.Warnings)}");
+            }
+            
+            Debug.Log($"Wave Matrix initialized: {maxBubbles} max bubbles, {updateFrequency}Hz update rate, Performance Impact: {validation.PerformanceImpact:F2}");
         }
         
         void UpdateWaveTime()
         {
-            currentTime += Time.deltaTime * settings.timeScale;
+            currentTime = _waveCore.UpdateWaveTime(Time.deltaTime, settings);
         }
         
         void UpdateWavePositions()
         {
+            // Use batch processing for better performance
+            var indicesToUpdate = new System.Collections.Generic.List<int>();
+            
             for (int i = 0; i < maxBubbles; i++)
             {
                 if (positionsDirty[i])
                 {
-                    cachedPositions[i] = CalculateWavePosition(i, currentTime);
+                    indicesToUpdate.Add(i);
                     positionsDirty[i] = false;
+                }
+            }
+            
+            if (indicesToUpdate.Count > 0)
+            {
+                var indices = indicesToUpdate.ToArray();
+                var results = new float3[indices.Length];
+                
+                _waveCore.CalculateWavePositionsBatch(indices, currentTime, settings, results);
+                
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    cachedPositions[indices[i]] = results[i];
                 }
             }
         }
         
         /// <summary>
-        /// Calculate wave-based position for a bubble at given index and time
+        /// Calculate wave-based position for a bubble at given index and time.
+        /// Now uses the optimized WaveMatrixCore for better performance.
         /// </summary>
         public float3 CalculateWavePosition(int bubbleIndex, float time)
         {
-            return CalculateWavePosition(bubbleIndex, time, 0f); // Default distance
+            return _waveCore.CalculateWavePosition(bubbleIndex, time, settings);
         }
         
         /// <summary>
-        /// Calculate wave-based position with AI-predicted distance
+        /// Calculate wave-based position with AI-predicted distance.
+        /// Now uses the optimized WaveMatrixCore for better performance.
         /// </summary>
         public float3 CalculateWavePosition(int bubbleIndex, float time, float aiDistance)
         {
-            // Base grid position
-            float gridX = (bubbleIndex % settings.gridWidth) * settings.spacing;
-            float gridZ = (bubbleIndex / settings.gridWidth) * settings.spacing;
-            
-            // Center the grid
-            gridX -= (settings.gridWidth * settings.spacing) * 0.5f;
-            gridZ -= (settings.gridWidth * settings.spacing) * 0.5f;
-            
-            // Apply AI distance offset (closer words have smaller Z values)
-            gridZ += aiDistance * settings.aiDistanceScale;
-            
-            // Calculate wave height using multiple wave components
-            float waveY = CalculateWaveHeight(gridX, gridZ, time);
-            
-            return new float3(gridX, waveY, gridZ);
+            return _waveCore.CalculateWavePosition(bubbleIndex, time, aiDistance, settings);
         }
         
         /// <summary>
-        /// Calculate wave height at given position and time using multiple wave components
+        /// Calculate wave height at given position and time.
+        /// Now uses the optimized WaveMatrixCore for better performance.
         /// </summary>
-        float CalculateWaveHeight(float x, float z, float time)
+        public float CalculateWaveHeight(float x, float z, float time)
         {
-            float height = 0f;
-            
-            // Primary wave (main wave pattern)
-            height += math.sin(x * settings.primaryWave.frequency + time * settings.primaryWave.speed) 
-                     * settings.primaryWave.amplitude;
-            
-            // Secondary wave (adds complexity)
-            height += math.sin(z * settings.secondaryWave.frequency + time * settings.secondaryWave.speed) 
-                     * settings.secondaryWave.amplitude;
-            
-            // Tertiary wave (fine detail)
-            float radialDistance = math.sqrt(x * x + z * z);
-            height += math.sin(radialDistance * settings.tertiaryWave.frequency + time * settings.tertiaryWave.speed) 
-                     * settings.tertiaryWave.amplitude;
-            
-            // Interference pattern (creates more complex wave interactions)
-            if (settings.enableInterference)
-            {
-                float interference = math.sin(x * settings.interferenceFreq + time) 
-                                   * math.cos(z * settings.interferenceFreq + time) 
-                                   * settings.interferenceAmplitude;
-                height += interference;
-            }
-            
-            return height;
+            return _waveCore.CalculateWaveHeight(new float2(x, z), time, settings);
         }
         
         /// <summary>
@@ -200,6 +200,77 @@ namespace XRBubbleLibrary.WaveMatrix
             // Draw center reference
             Gizmos.color = Color.red;
             Gizmos.DrawWireCube(transform.position, Vector3.one * 0.2f);
+        }
+    }
+} 
+           Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(transform.position, Vector3.one * 0.2f);
+        }
+        
+        /// <summary>
+        /// Force update of all bubble positions (useful when settings change)
+        /// </summary>
+        public void ForceUpdateAllPositions()
+        {
+            for (int i = 0; i < maxBubbles; i++)
+            {
+                positionsDirty[i] = true;
+            }
+            
+            UpdateWavePositions();
+        }
+        
+        /// <summary>
+        /// Get grid position for a bubble index without wave displacement.
+        /// </summary>
+        public float3 GetGridPosition(int bubbleIndex)
+        {
+            return _waveCore.GetGridPosition(bubbleIndex, settings);
+        }
+        
+        /// <summary>
+        /// Convert world position to grid index (useful for hit testing).
+        /// </summary>
+        public int WorldPositionToGridIndex(float3 worldPosition)
+        {
+            return _waveCore.WorldPositionToGridIndex(worldPosition, settings);
+        }
+        
+        /// <summary>
+        /// Calculate multiple bubble positions efficiently in batch.
+        /// </summary>
+        public void CalculateBubblePositionsBatch(int[] bubbleIndices, float3[] results)
+        {
+            _waveCore.CalculateWavePositionsBatch(bubbleIndices, currentTime, settings, results);
+        }
+        
+        /// <summary>
+        /// Calculate multiple bubble positions with AI distances efficiently in batch.
+        /// </summary>
+        public void CalculateBubblePositionsBatch(int[] bubbleIndices, float[] aiDistances, float3[] results)
+        {
+            _waveCore.CalculateWavePositionsBatch(bubbleIndices, currentTime, aiDistances, settings, results);
+        }
+        
+        /// <summary>
+        /// Get performance statistics from the core wave system.
+        /// </summary>
+        public WaveMatrixPerformanceStats GetPerformanceStats()
+        {
+            if (_waveCore is WaveMatrixCore core)
+            {
+                return core.GetPerformanceStats();
+            }
+            
+            return new WaveMatrixPerformanceStats();
+        }
+        
+        /// <summary>
+        /// Validate current settings and log any issues.
+        /// </summary>
+        public WaveMatrixValidationResult ValidateCurrentSettings()
+        {
+            return _waveCore.ValidateSettings(settings);
         }
     }
 }
